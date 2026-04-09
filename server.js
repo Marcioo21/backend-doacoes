@@ -5,9 +5,29 @@ const dotenv = require('dotenv');
 
 // ========== FIREBASE ADMIN ==========
 const admin = require('firebase-admin');
-// Carrega a chave de serviço (baixada do Console do Firebase)
-const serviceAccount = require('./serviceAccountKey.json');
 
+// Função para carregar a chave do Firebase (funciona localmente e no Render)
+function getFirebaseServiceAccount() {
+  // Tenta carregar da variável de ambiente (Render)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } catch (error) {
+      console.error('Erro ao parsear FIREBASE_SERVICE_ACCOUNT:', error);
+    }
+  }
+  
+  // Fallback: carrega do arquivo local (desenvolvimento)
+  try {
+    return require('./serviceAccountKey.json');
+  } catch (error) {
+    console.error('Erro ao carregar serviceAccountKey.json:', error);
+    throw new Error('Não foi possível carregar as credenciais do Firebase');
+  }
+}
+
+// Inicializa o Firebase com a chave obtida
+const serviceAccount = getFirebaseServiceAccount();
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
